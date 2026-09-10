@@ -21,7 +21,18 @@ import { EditProfileModal } from '../components/EditProfileModal';
 import { getDailyQuote, getRandomQuote } from '../utils/quotesHelper';
 
 export const ProfileView = ({ setActiveTab }) => {
-  const { user, levelData, topicStats, currentDate, toggleSubjectDSA, toggleAudio, resetSystemData } = useSystem();
+  const { 
+    user, 
+    levelData, 
+    topicStats, 
+    calendarHistory, 
+    todayQuests, 
+    todayStr, 
+    currentDate, 
+    toggleSubjectDSA, 
+    toggleAudio, 
+    resetSystemData 
+  } = useSystem();
   const [resetTime, setResetTime] = useState(user.resetTime || '23:59');
   const [savedNotice, setSavedNotice] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,7 +48,7 @@ export const ProfileView = ({ setActiveTab }) => {
   const hour = new Date().getHours();
   const timeGreeting = hour < 12 ? 'Good Morning,' : hour < 18 ? 'Good Afternoon,' : 'Good Evening,';
 
-  // Calculate overall tasks completed & accuracy
+  // Calculate overall questions solved & accuracy
   let totalSolvedAll = 0;
   let totalCorrectAll = 0;
   Object.values(topicStats).forEach((stat) => {
@@ -45,6 +56,27 @@ export const ProfileView = ({ setActiveTab }) => {
     totalCorrectAll += stat.correct || 0;
   });
   const overallAccuracy = totalSolvedAll > 0 ? (totalCorrectAll / totalSolvedAll * 100).toFixed(0) : '86';
+
+  // Calculate total subject tasks completed across calendar history & today's quests
+  let totalTasksCompleted = 0;
+  const countedHistory = calendarHistory || {};
+  Object.values(countedHistory).forEach((dayLog) => {
+    if (dayLog && dayLog.subjects) {
+      Object.values(dayLog.subjects).forEach((sub) => {
+        if (sub.target > 0 && sub.solved >= sub.target) {
+          totalTasksCompleted += 1;
+        }
+      });
+    }
+  });
+
+  if (!countedHistory[todayStr] && todayQuests) {
+    Object.values(todayQuests).forEach((q) => {
+      if (q.target > 0 && q.solved >= q.target) {
+        totalTasksCompleted += 1;
+      }
+    });
+  }
 
   const handleSave = () => {
     setSavedNotice(true);
@@ -209,10 +241,10 @@ export const ProfileView = ({ setActiveTab }) => {
                 <span>Completed</span>
               </div>
               <div className="font-sans" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff', marginTop: '2px', lineHeight: 1 }}>
-                {totalSolvedAll}
+                {totalTasksCompleted}
               </div>
               <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '10px' }}>
-                Tasks Completed
+                Tasks Completed ({totalSolvedAll} Qs)
               </div>
             </div>
 
