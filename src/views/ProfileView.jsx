@@ -57,25 +57,27 @@ export const ProfileView = ({ setActiveTab }) => {
   });
   const overallAccuracy = totalSolvedAll > 0 ? (totalCorrectAll / totalSolvedAll * 100).toFixed(0) : '86';
 
-  // Calculate total subject tasks completed across calendar history & today's quests
+  // Calculate total completed daily tasks across calendar history & today's quests
   let totalTasksCompleted = 0;
   const countedHistory = calendarHistory || {};
   Object.values(countedHistory).forEach((dayLog) => {
-    if (dayLog && dayLog.subjects) {
-      Object.values(dayLog.subjects).forEach((sub) => {
-        if (sub.target > 0 && sub.solved >= sub.target) {
-          totalTasksCompleted += 1;
-        }
-      });
+    if (dayLog && dayLog.status === 'Completed') {
+      totalTasksCompleted += 1;
     }
   });
 
   if (!countedHistory[todayStr] && todayQuests) {
+    let allDone = true;
+    let hasTarget = false;
     Object.values(todayQuests).forEach((q) => {
-      if (q.target > 0 && q.solved >= q.target) {
-        totalTasksCompleted += 1;
+      if (q.target > 0) {
+        hasTarget = true;
+        if (q.solved < q.target) allDone = false;
       }
     });
+    if (hasTarget && allDone) {
+      totalTasksCompleted += 1;
+    }
   }
 
   const handleSave = () => {
